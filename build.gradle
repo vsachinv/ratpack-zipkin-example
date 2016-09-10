@@ -1,3 +1,13 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'io.ratpack:ratpack-gradle:1.4.1',
+                'com.github.jengelman.gradle.plugins:shadow:1.2.1'
+    }
+}
+
 apply plugin: 'application'
 apply plugin: "io.ratpack.ratpack-java"
 
@@ -7,9 +17,14 @@ run {
     /* Pass all the properties: */
     systemProperties System.getProperties()
 }
-
+repositories {
+    jcenter()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots/"
+    } 
+}
 dependencies {
-    compile project(":ratpack-zipkin")
+    compile 'com.github.hyleung:ratpack-zipkin:1.0.0-SNAPSHOT'
     compile 'io.ratpack:ratpack-guice:1.4.1'
     compile 'org.slf4j:slf4j-api:1.7.13'
     compile 'io.zipkin.brave:brave-http:3.10.0'
