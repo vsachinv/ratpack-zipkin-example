@@ -24,7 +24,7 @@ repositories {
     } 
 }
 dependencies {
-    compile 'com.github.hyleung:ratpack-zipkin:1.0.0-SNAPSHOT'
+    compile 'com.github.hyleung:ratpack-zipkin:1.0.0'
     compile 'io.ratpack:ratpack-guice:1.4.1'
     compile 'org.slf4j:slf4j-api:1.7.13'
     compile 'io.zipkin.brave:brave-http:3.10.0'
