@@ -8,6 +8,12 @@ import ratpack.guice.Guice;
 import ratpack.logging.MDCInterceptor;
 import ratpack.server.RatpackServer;
 import ratpack.zipkin.ServerTracingModule;
+import zipkin.Span;
+import zipkin.reporter.AsyncReporter;
+import zipkin.reporter.Reporter;
+import zipkin.reporter.Sender;
+import zipkin.reporter.kafka08.KafkaSender;
+import zipkin.reporter.libthrift.LibthriftSender;
 
 /**
  * RatPack Server.
@@ -24,7 +30,7 @@ public class App {
               config
                   .serviceName("ratpack-demo")
                   .sampler(Sampler.create(samplingPct))
-                  .spanCollector(spanCollector())
+                  .spanReporter(spanReporter())
                   .requestAnnotations(request ->
                       Lists.newArrayList(KeyValueAnnotation.create("uri", request.getUri()))
                   )
@@ -46,7 +52,7 @@ public class App {
             .module(ServerTracingModule.class, config -> config
                 .serviceName("other-server")
                 .sampler(Sampler.create(samplingPct))
-                .spanCollector(spanCollector()))
+                .spanReporter(spanReporter()))
             .bind(HelloWorldHandler.class)
             .add(MDCInterceptor.instance())
         ))
@@ -55,19 +61,21 @@ public class App {
     );
   }
 
-  private static SpanCollector spanCollector() {
+  private static Reporter<Span> spanReporter() {
     String scribeHost = System.getProperty("scribeHost");
     String kafkaHost = System.getProperty("kafkaHost");
     if (scribeHost != null) {
-      return new ScribeSpanCollector(scribeHost, 9410);
+      return AsyncReporter.builder(LibthriftSender.builder()
+                                           .host(scribeHost)
+                                           .port(9410)
+                                           .build()).build();
     } else if (kafkaHost != null) {
-      KafkaSpanCollector.Config config = KafkaSpanCollector
-          .Config.builder(kafkaHost)
-                 .topic("zipkin")
-                 .build();
-      return KafkaSpanCollector.create(config, new EmptySpanCollectorMetricsHandler());
+      return AsyncReporter.builder(KafkaSender.builder()
+          .bootstrapServers(kafkaHost)
+          .topic("zipkin")
+          .build()).build();
     } else {
-      return new LoggingSpanCollector();
+      return Reporter.CONSOLE;
     }
   }
 
