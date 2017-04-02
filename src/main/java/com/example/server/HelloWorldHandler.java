@@ -21,9 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ratpack.handling.Context;
 import ratpack.handling.Handler;
+import ratpack.http.client.HttpClient;
 import ratpack.http.client.ReceivedResponse;
 import ratpack.server.ServerConfig;
-import ratpack.zipkin.ZipkinHttpClient;
+import ratpack.zipkin.Zipkin;
 
 import javax.inject.Inject;
 import java.net.URI;
@@ -33,7 +34,8 @@ public class HelloWorldHandler implements Handler {
   @Inject
   private LocalTracer tracer;
   @Inject
-  private ZipkinHttpClient client;
+  @Zipkin
+  private HttpClient client;
 
   @Override
   public void handle(final Context ctx) throws Exception {
