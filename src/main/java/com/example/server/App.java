@@ -1,9 +1,7 @@
 package com.example.server;
 
-import com.github.kristofa.brave.*;
-import com.github.kristofa.brave.kafka.KafkaSpanCollector;
-import com.github.kristofa.brave.scribe.ScribeSpanCollector;
-import com.google.common.collect.Lists;
+import brave.http.HttpAdapter;
+import brave.http.HttpSampler;
 import ratpack.guice.Guice;
 import ratpack.logging.MDCInterceptor;
 import ratpack.server.RatpackServer;
@@ -11,7 +9,6 @@ import ratpack.zipkin.ServerTracingModule;
 import zipkin.Span;
 import zipkin.reporter.AsyncReporter;
 import zipkin.reporter.Reporter;
-import zipkin.reporter.Sender;
 import zipkin.reporter.kafka08.KafkaSender;
 import zipkin.reporter.libthrift.LibthriftSender;
 
@@ -27,16 +24,16 @@ public class App {
         .serverConfig(config -> config.port(serverPort))
         .registry(Guice.registry(binding -> binding
             .module(ServerTracingModule.class, config -> {
-              config
-                  .serviceName("ratpack-demo")
-                  .sampler(Sampler.create(samplingPct))
-                  .spanReporter(spanReporter())
-                  .requestAnnotations(request ->
-                      Lists.newArrayList(KeyValueAnnotation.create("uri", request.getUri()))
-                  )
-                  .responseAnnotations(response ->
-                      Lists.newArrayList(KeyValueAnnotation.create("foo", "bar"))
-                  );
+config
+    .serviceName("ratpack-demo")
+    .serverSampler(new HttpSampler() {
+      @Override
+      public <Req> Boolean trySample(final HttpAdapter<Req, ?> adapter, final Req request) {
+        return true;
+      }
+    })
+    .clientSampler(HttpSampler.TRACE_ID)
+    .spanReporter(spanReporter());
             })
             .bind(HelloWorldHandler.class)
             .add(MDCInterceptor.instance())
@@ -51,7 +48,6 @@ public class App {
         .registry(Guice.registry(binding -> binding
             .module(ServerTracingModule.class, config -> config
                 .serviceName("other-server")
-                .sampler(Sampler.create(samplingPct))
                 .spanReporter(spanReporter()))
             .bind(HelloWorldHandler.class)
             .add(MDCInterceptor.instance())
