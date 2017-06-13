@@ -1,9 +1,6 @@
 package com.example.server;
 
-import com.github.kristofa.brave.*;
-import com.github.kristofa.brave.kafka.KafkaSpanCollector;
-import com.github.kristofa.brave.scribe.ScribeSpanCollector;
-import com.google.common.collect.Lists;
+import brave.sampler.Sampler;
 import ratpack.guice.Guice;
 import ratpack.logging.MDCInterceptor;
 import ratpack.server.RatpackServer;
@@ -11,7 +8,6 @@ import ratpack.zipkin.ServerTracingModule;
 import zipkin.Span;
 import zipkin.reporter.AsyncReporter;
 import zipkin.reporter.Reporter;
-import zipkin.reporter.Sender;
 import zipkin.reporter.kafka08.KafkaSender;
 import zipkin.reporter.libthrift.LibthriftSender;
 
@@ -30,13 +26,7 @@ public class App {
               config
                   .serviceName("ratpack-demo")
                   .sampler(Sampler.create(samplingPct))
-                  .spanReporter(spanReporter())
-                  .requestAnnotations(request ->
-                      Lists.newArrayList(KeyValueAnnotation.create("uri", request.getUri()))
-                  )
-                  .responseAnnotations(response ->
-                      Lists.newArrayList(KeyValueAnnotation.create("foo", "bar"))
-                  );
+                  .spanReporter(spanReporter());
             })
             .bind(HelloWorldHandler.class)
             .add(MDCInterceptor.instance())

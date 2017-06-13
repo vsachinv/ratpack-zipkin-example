@@ -15,8 +15,10 @@
  */
 package com.example.server;
 
+import brave.Span;
+import brave.Tracer;
+import brave.http.HttpTracing;
 import com.github.kristofa.brave.KeyValueAnnotation;
-import com.github.kristofa.brave.LocalTracer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ratpack.handling.Context;
@@ -32,7 +34,7 @@ import java.net.URI;
 public class HelloWorldHandler implements Handler {
   private final Logger logger = LoggerFactory.getLogger(HelloWorldHandler.class);
   @Inject
-  private LocalTracer tracer;
+  private HttpTracing httpTracing;
   @Inject
   @Zipkin
   private HttpClient client;
@@ -40,12 +42,16 @@ public class HelloWorldHandler implements Handler {
   @Override
   public void handle(final Context ctx) throws Exception {
     ctx.getExecution().add(KeyValueAnnotation.create("some-key", "some-value"));
-    tracer.startNewSpan("HelloWorldHandler", "handle");
+    Tracer tracer = httpTracing.tracing().tracer();
+    Span currentSpan = tracer.currentSpan();
+    final Span child = tracer.newChild(currentSpan.context()).name("HelloWorld handler").start();
+    final Tracer.SpanInScope scope = tracer.withSpanInScope(child);
     client.get(new URI("http://localhost:" + (ctx.get(ServerConfig.class).getPort() + 1) + "/"))
           .map(ReceivedResponse::getStatusCode)
           .then(a -> {
             ctx.getResponse().send("Yo dawg.");
-            tracer.finishSpan();
+            child.finish();
+            scope.close();
           });
 
   }
