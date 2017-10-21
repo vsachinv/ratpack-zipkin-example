@@ -26,13 +26,17 @@ public class App {
               config
                   .serviceName("ratpack-demo")
                   .sampler(Sampler.create(samplingPct))
-                  .spanReporter(spanReporter());
+                  .spanReporter(spanReporter())
+                  .spanNameProvider((request,pathBindingOpt) -> pathBindingOpt
+                      .map(pathBinding -> pathBinding.getDescription())
+                      .orElse(request.getPath()));
             })
             .bind(HelloWorldHandler.class)
             .add(MDCInterceptor.instance())
         ))
         .handlers(chain -> chain
             .get("hello", HelloWorldHandler.class)
+            .get("say/:something", ctx -> ctx.render(String.format("Yo! %s", ctx.getPathTokens().get("something"))))
             .all(ctx -> ctx.render("root")))
     );
 
@@ -42,7 +46,10 @@ public class App {
             .module(ServerTracingModule.class, config -> config
                 .serviceName("other-server")
                 .sampler(Sampler.create(samplingPct))
-                .spanReporter(spanReporter()))
+                .spanReporter(spanReporter())
+                .spanNameProvider((request,pathBindingOpt) -> pathBindingOpt
+                    .map(pathBinding -> pathBinding.getDescription())
+                    .orElse(request.getPath())) )
             .bind(HelloWorldHandler.class)
             .add(MDCInterceptor.instance())
         ))
