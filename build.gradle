@@ -31,6 +31,7 @@ dependencies {
     compile 'io.zipkin.brave:brave-spancollector-kafka:4.3.3'
     compile 'io.zipkin.reporter:zipkin-sender-libthrift:0.10.0'
     compile 'io.zipkin.reporter:zipkin-sender-kafka08:0.10.0'
+    compile 'io.zipkin.reporter:zipkin-sender-okhttp3:1.1.2'
     runtime 'ch.qos.logback:logback-core:1.1.7'
     runtime 'ch.qos.logback:logback-classic:1.1.7'
 }
